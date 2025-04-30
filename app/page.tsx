@@ -5,20 +5,26 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CurrencySwitcher } from "@/components/currency-switcher"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { EditableValue } from "@/components/editable-value"
 
 export default function Dashboard() {
   const [currency, setCurrency] = useState("USD")
   const [language, setLanguage] = useState("English")
 
-  // Sample transaction data
-  const transactions = [
-    { id: 1, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-    { id: 2, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-    { id: 3, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-    { id: 4, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-    { id: 5, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-    { id: 6, amount: 50, name: "John Doe", email: "John@gmail.com", type: "Subscription" },
-  ]
+  // Financial metrics state
+  const [totalRevenue, setTotalRevenue] = useState("183,834.94")
+  const [netIncome, setNetIncome] = useState("80,489.94")
+  const [infraExpenses, setInfraExpenses] = useState("3,834.94")
+
+  // Transactions state
+  const [transactions, setTransactions] = useState([
+    { id: 1, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+    { id: 2, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+    { id: 3, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+    { id: 4, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+    { id: 5, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+    { id: 6, amount: "50", name: "John Doe", email: "John@gmail.com", type: "Subscription" },
+  ])
 
   // Currency symbols mapping
   const currencySymbols: Record<string, string> = {
@@ -31,6 +37,13 @@ export default function Dashboard() {
 
   // Get current currency symbol
   const currencySymbol = currencySymbols[currency] || "$"
+
+  // Update transaction amount
+  const updateTransactionAmount = (id: number, newAmount: string) => {
+    setTransactions(
+      transactions.map((transaction) => (transaction.id === id ? { ...transaction, amount: newAmount } : transaction)),
+    )
+  }
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -54,9 +67,19 @@ export default function Dashboard() {
 
       {/* Financial Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <MetricCard title="Total Revenue" value={`${currencySymbol}183,834.94`} />
-        <MetricCard title="Net Income" value={`${currencySymbol}80,489.94`} />
-        <MetricCard title="Infra Expenses" value={`${currencySymbol}3,834.94`} />
+        <MetricCard
+          title="Total Revenue"
+          value={totalRevenue}
+          currencySymbol={currencySymbol}
+          onValueChange={setTotalRevenue}
+        />
+        <MetricCard title="Net Income" value={netIncome} currencySymbol={currencySymbol} onValueChange={setNetIncome} />
+        <MetricCard
+          title="Infra Expenses"
+          value={infraExpenses}
+          currencySymbol={currencySymbol}
+          onValueChange={setInfraExpenses}
+        />
       </div>
 
       {/* Transactions Section */}
@@ -64,7 +87,12 @@ export default function Dashboard() {
         <h2 className="text-xl font-medium mb-4">Transactions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {transactions.map((transaction) => (
-            <TransactionCard key={transaction.id} transaction={transaction} currencySymbol={currencySymbol} />
+            <TransactionCard
+              key={transaction.id}
+              transaction={transaction}
+              currencySymbol={currencySymbol}
+              onAmountChange={(newAmount) => updateTransactionAmount(transaction.id, newAmount)}
+            />
           ))}
         </div>
       </div>
@@ -72,32 +100,47 @@ export default function Dashboard() {
   )
 }
 
-function MetricCard({ title, value }: { title: string; value: string }) {
+interface MetricCardProps {
+  title: string
+  value: string
+  currencySymbol: string
+  onValueChange: (value: string) => void
+}
+
+function MetricCard({ title, value, currencySymbol, onValueChange }: MetricCardProps) {
   return (
     <Card className="border-2">
       <CardContent className="p-4">
         <h3 className="text-gray-700 dark:text-gray-300 mb-2">{title}</h3>
-        <p className="text-3xl font-bold">{value}</p>
+        <EditableValue value={value} prefix={currencySymbol} onSave={onValueChange} className="text-3xl font-bold" />
       </CardContent>
     </Card>
   )
 }
 
-function TransactionCard({
-  transaction,
-  currencySymbol,
-}: {
-  transaction: { amount: number; name: string; email: string; type: string }
+interface TransactionCardProps {
+  transaction: {
+    id: number
+    amount: string
+    name: string
+    email: string
+    type: string
+  }
   currencySymbol: string
-}) {
+  onAmountChange: (newAmount: string) => void
+}
+
+function TransactionCard({ transaction, currencySymbol, onAmountChange }: TransactionCardProps) {
   return (
     <Card className="border">
       <CardContent className="p-4 flex items-start">
         <div className="mr-4">
-          <p className="text-3xl font-bold">
-            {currencySymbol}
-            {transaction.amount}
-          </p>
+          <EditableValue
+            value={transaction.amount}
+            prefix={currencySymbol}
+            onSave={onAmountChange}
+            className="text-3xl font-bold"
+          />
           <p className="text-orange-500 text-sm">{transaction.type}</p>
         </div>
         <div>
